@@ -462,10 +462,20 @@ function Show-ConfigurationProfileMenu {
             $profileName = $profile.name
         }
         
+        # Get the profile ID - handle both uppercase and lowercase
+        $profileId = $null
+        if (-not [string]::IsNullOrWhiteSpace($profile.Id)) {
+            $profileId = $profile.Id
+        } elseif (-not [string]::IsNullOrWhiteSpace($profile.id)) {
+            $profileId = $profile.id
+        } else {
+            $profileId = "Unknown"
+        }
+        
         $profilesForDisplay += [PSCustomObject]@{
             Index = $i + 1
             Name = $profileName
-            ID = $profile.Id
+            ID = $profileId
             Platforms = $platforms
             Technologies = $technologies
             Created = if ($profile.CreatedDateTime) { 
@@ -1657,7 +1667,11 @@ function Start-InteractiveComparison {
     # Debug: Show profile properties
     Write-Host "DEBUG - Source profile ID: '$($sourceProfile.Id)'" -ForegroundColor Gray
     Write-Host "DEBUG - Source profile id: '$($sourceProfile.id)'" -ForegroundColor Gray
-    Write-Host "DEBUG - Source profile properties: $($sourceProfile | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | Where-Object { $_ -like '*id*' -or $_ -like '*Id*' })" -ForegroundColor Gray
+    Write-Host "DEBUG - Source profile type: $($sourceProfile.GetType().Name)" -ForegroundColor Gray
+    Write-Host "DEBUG - All source profile properties:" -ForegroundColor Gray
+    $sourceProfile | Get-Member -MemberType Properties | Select-Object Name, Definition | Format-Table -AutoSize
+    Write-Host "DEBUG - Source profile as JSON:" -ForegroundColor Gray
+    $sourceProfile | ConvertTo-Json -Depth 2
     
     # Select destination profile  
     $destinationProfile = Show-ConfigurationProfileMenu -Profiles $allProfiles -Title "Select DESTINATION Configuration Profile"
@@ -1671,7 +1685,11 @@ function Start-InteractiveComparison {
     # Debug: Show profile properties
     Write-Host "DEBUG - Destination profile ID: '$($destinationProfile.Id)'" -ForegroundColor Gray
     Write-Host "DEBUG - Destination profile id: '$($destinationProfile.id)'" -ForegroundColor Gray
-    Write-Host "DEBUG - Destination profile properties: $($destinationProfile | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | Where-Object { $_ -like '*id*' -or $_ -like '*Id*' })" -ForegroundColor Gray
+    Write-Host "DEBUG - Destination profile type: $($destinationProfile.GetType().Name)" -ForegroundColor Gray
+    Write-Host "DEBUG - All destination profile properties:" -ForegroundColor Gray
+    $destinationProfile | Get-Member -MemberType Properties | Select-Object Name, Definition | Format-Table -AutoSize
+    Write-Host "DEBUG - Destination profile as JSON:" -ForegroundColor Gray
+    $destinationProfile | ConvertTo-Json -Depth 2
     
     # Confirm the comparison
     $sourceProfileName = $sourceProfile.DisplayName -or $sourceProfile.Name -or $sourceProfile.displayName -or $sourceProfile.name -or 'Unknown'
