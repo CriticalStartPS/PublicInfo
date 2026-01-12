@@ -1,0 +1,16 @@
+DeviceInfo
+| where OSPlatform contains "Windows" and OSPlatform !contains "Server"
+| project DeviceId, DeviceName, OSPlatform, OSVersion, OSBuild
+| distinct DeviceId, DeviceName, OSPlatform, OSVersion, OSBuild
+| join kind=inner(
+    DeviceTvmSecureConfigurationAssessment
+    | where ConfigurationId == "scid-2010" and isnotnull(Context)
+    | extend avdata = parse_json(Context)
+    | extend DefenderMode = case(
+        tostring(avdata[0][0]) == "0", "Active",
+        tostring(avdata[0][0]) == "1", "Passive",
+        tostring(avdata[0][0]) == "4", "EDR Block Mode",
+        "Unknown"
+    )
+    | project DeviceName, DeviceId, DefenderMode, Timestamp
+)on DeviceId
